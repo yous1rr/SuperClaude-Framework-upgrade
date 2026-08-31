@@ -37,6 +37,7 @@ SuperClaude V8 版本代号为 **“量子智能终极版”**，它在核心架
 | 🧠 **多模型神经适配层 V2 (Neural Adapter V2)** | **智能模型选择与优化路由。** 实现了 100% 兼容所有主流 LLM 模型的能力。它使用 **神经网络路由器 (Neural Network Router)** 智能评估任务需求、模型性能和成本，自动选择最合适的模型，并进行 **量子增强处理** 和 **智能缓存管理**。 | `core/multi_model_neural_adapter_v2.py` |
 | 🌟 **全能万金油终极专家 V8 (Omni Agent)** | **超级智能体。** 融合了所有专业知识和 V8 核心架构的“大脑”。它具备 **无限学习能力** 和 **自主决策能力**，追求 100% 任务完成率。 | `agents/core/universal-omni-agent-v8.md` |
 | 🔬 **系统对比测试框架** | **质量保障的基石。** 用于多维度对比新旧系统在输出质量、完整性、效率和创新性上的差异，确保每一次升级都是真正的进步。 | `tests/system_comparison_framework.py` |
+| 🥧 **oh-my-pi 原生桥接** | **跨客户端运行。** 通过 `.omp/` 桥接层（上下文导入 + TypeScript 扩展 + 任务代理），同一套 `.iflow/` 框架可直接驱动 [oh-my-pi](https://github.com/can1357/oh-my-pi) (omp)，`/sc:*` 命令体验与 Claude Code 完全一致。 | `.omp/extensions/iflow.ts` |
 
 ---
 
@@ -86,6 +87,44 @@ python3 setup.py install_v8_core
 | **3. 核心实现** | `/sc:implement login-api --with-tests` | 激活 **全能专家 V8**，自动协调 **后端架构师** 和 **安全工程师**，生成代码并集成测试。 | `commands/sc/implement.md` |
 | **4. 质量提升** | `/sc:improve src/auth --type quality` | 激活 **重构专家**，系统性地优化代码质量、性能和可维护性。 | `commands/sc/improve.md` |
 | **5. 总结反思** | `/sc:reflect --type session` | 激活 **内省模式**，让 AI 总结本次会话的得失，并将经验沉淀到 **意识流系统** 中。 | `MODE_Introspection.md` |
+
+### 4. 在 oh-my-pi (omp) 中使用（原生支持）
+
+本仓库自带 `.omp/` 桥接层，无需任何迁移即可让 [oh-my-pi](https://github.com/can1357/oh-my-pi)（omp）驱动整套 V8 工作流，`.iflow/` 保持唯一事实源。
+
+**步骤 1：安装 omp**（Windows 示例，macOS/Linux 见 omp 官网）
+
+```powershell
+irm https://omp.sh/install.ps1 | iex
+```
+
+**步骤 2：在仓库根目录启动 omp**
+
+```bash
+cd SuperClaude-Framework-upgrade   # 或你的项目（把 .iflow/、.omp/、scripts/ 一起拷入）
+omp
+```
+
+启动后桥接层自动生效：
+
+| 桥接组件 | 作用 |
+| :--- | :--- |
+| `.omp/AGENTS.md` | omp 项目上下文入口，通过 `@` 导入 `.iflow` 的旗帜/原则/规则/行为模式 |
+| `.omp/RULES.md` | 粘性规则，每个回合重新附加（安全、零错误容忍等硬约束） |
+| `.omp/extensions/iflow.ts` | 启动时扫描 `.iflow/commands/sc/*.md`，动态注册全部 `/sc:*` 命令 |
+| `.omp/agents/*.md` | 15 个专家已转换为 omp 任务代理，可被 task 工具按名称委派 |
+
+**步骤 3：像在 Claude Code 中一样使用**
+
+```bash
+/sc:implement 用户认证模块 --with-tests
+/sc:troubleshoot 登录超时问题
+/sc          # 列出全部 /sc:* 命令、代理与模式
+```
+
+- 命令全文（触发条件、行为流程、输出格式）由扩展注入为下一条用户提示，行为与 Claude Code 文件命令一致
+- 修改 `.iflow/commands/sc/*.md` 后，执行 `/reload-plugins` 即时生效
+- 修改 `.iflow/agents/` 后，运行 `node scripts/sync-omp-agents.mjs` 重新生成任务代理
 
 ---
 
@@ -217,7 +256,17 @@ python3 setup.py install_v8_core
         
     📂 tests/                      # 测试与质量保障
         📄 system_comparison_framework.py # 系统对比测试框架
-    
+
+📂 .omp/                          # oh-my-pi (omp) 桥接层
+    📄 AGENTS.md                  # omp 项目上下文入口（@导入 .iflow 组件）
+    📄 RULES.md                   # 粘性规则（每回合重新附加）
+    📂 agents/                    # 15 个 omp 任务代理（脚本生成）
+    📂 extensions/
+        📄 iflow.ts               # 动态注册 /sc:* 命令的桥接扩展
+
+📂 scripts/
+    📄 sync-omp-agents.mjs        # .iflow/agents → .omp/agents 同步脚本
+
     # 📂 backups/                  # 备份目录
     # 📂 logs/                     # 日志目录
 ```
