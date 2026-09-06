@@ -1,8 +1,11 @@
-# Project-shared task policy for iflow.
-# Concrete models remain user-controlled through OMP built-in Roles.
+# Merged into ~/.omp/agent/config.yml by iflow-zh's /sc:setup (or `npx iflow-zh`).
+#
+# Concrete models stay user-controlled: every value here is an omp built-in
+# Role alias, so `/model` remains the single place where providers are chosen.
+# The merge is key-wise — pre-existing overrides for other agents survive.
 
 modelRoles:
-  # The interactive parent session uses the strong reasoning Role.
+  # The interactive parent session dispatches; give it the strong reasoning Role.
   default: "@slow"
 
 task:
