@@ -343,7 +343,8 @@ export default function iflowExtension(pi: ExtensionAPI): void {
    * means the call refused because this is a `task`-spawned subagent — the
    * single choke point that keeps `/sc:dispatch on` from locking a subagent
    * now that the `hasUI` guards are gone from `session_start` and the
-   * `tool_call` handler.
+   * `tool_call` handler. Subagents keep their complete configured tool set
+   * and are never narrowed, regardless of parent mode or `--sc-dispatch`.
    */
   async function enableDispatcher(): Promise<{ removed: string[]; skipped?: "subagent" }> {
     if (isSubagentSession(pi)) return { removed: [], skipped: "subagent" };
@@ -433,7 +434,11 @@ export default function iflowExtension(pi: ExtensionAPI): void {
       if (arg === "on" || arg === "") {
         const { removed, skipped } = await enableDispatcher();
         if (skipped === "subagent") {
-          report(ctx, "调度者模式：当前是子会话（task subagent），不开启调度者。", "warning");
+          report(
+            ctx,
+            "调度者模式：当前是子会话（task subagent），不开启调度者；子会话保留完整配置工具集。",
+            "warning",
+          );
           return;
         }
         report(
@@ -493,18 +498,20 @@ export default function iflowExtension(pi: ExtensionAPI): void {
       lines.push(`iflow setup 检查失败：${error instanceof Error ? error.message : error}`);
     }
 
-    const flagOff = String(pi.getFlag(DISPATCH_FLAG) ?? "").trim().toLowerCase() === "off";
-    if (flagOff) {
-      lines.push("调度者模式：--sc-dispatch off，不开启。");
-    } else if (isSubagentSession(pi)) {
-      lines.push("调度者模式：当前是子会话（task subagent），不开启。");
+    if (isSubagentSession(pi)) {
+      lines.push("调度者模式：当前是子会话（task subagent），不开启调度者；子会话保留完整配置工具集。");
     } else {
-      const { removed } = await enableDispatcher();
-      lines.push(
-        removed.length
-          ? `调度者模式：已收走 ${removed.join(", ")}，落地动作请用 task 分派。关闭：/sc:dispatch off`
-          : "调度者模式：当前活跃工具里没有落地工具。",
-      );
+      const flagOff = String(pi.getFlag(DISPATCH_FLAG) ?? "").trim().toLowerCase() === "off";
+      if (flagOff) {
+        lines.push("调度者模式：--sc-dispatch off，不开启。");
+      } else {
+        const { removed } = await enableDispatcher();
+        lines.push(
+          removed.length
+            ? `调度者模式：已收走 ${removed.join(", ")}，落地动作请用 task 分派。关闭：/sc:dispatch off`
+            : "调度者模式：当前活跃工具里没有落地工具。",
+        );
+      }
     }
 
     report(ctx, lines.join("\n"));
